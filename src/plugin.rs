@@ -2,9 +2,9 @@ use crate::{
     debug::DebugVisualizationsPlugin,
     render::{VelloCanvasSettings, VelloRenderPlugin},
     text::VelloFontLoader,
-    VelloAsset, VelloFont, VelloRenderSettings,
+    VelloFont, VelloRenderSettings,
 };
-use bevy::{asset::load_internal_binary_asset, prelude::*, render::view::RenderLayers};
+use bevy::{prelude::*, render::view::RenderLayers};
 use vello::AaConfig;
 
 #[derive(Clone)]
@@ -43,21 +43,7 @@ impl Plugin for VelloPlugin {
             },
         })
         .add_plugins(DebugVisualizationsPlugin)
-        .init_asset::<VelloAsset>()
         .init_asset::<VelloFont>()
         .init_asset_loader::<VelloFontLoader>();
-        #[cfg(feature = "svg")]
-        app.add_plugins(crate::integrations::svg::SvgIntegrationPlugin);
-        #[cfg(feature = "lottie")]
-        app.add_plugins(crate::integrations::lottie::LottieIntegrationPlugin);
-        #[cfg(feature = "experimental-dotLottie")]
-        app.add_plugins(crate::integrations::dot_lottie::DotLottieIntegrationPlugin);
-        #[cfg(feature = "default_font")]
-        load_internal_binary_asset!(
-            app,
-            Handle::default(),
-            "text/FiraMono/FiraMono-subset.ttf",
-            |bytes: &[u8], _path: String| { VelloFont::new(bytes.to_vec()) }
-        );
     }
 }

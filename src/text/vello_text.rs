@@ -78,9 +78,16 @@ impl VelloTextSection {
         camera_transform: &GlobalTransform,
     ) -> Option<Rect> {
         let Rect { min, max } = self.bb_in_world_space(font, gtransform);
-        camera
-            .viewport_to_world_2d(camera_transform, min)
-            .zip(camera.viewport_to_world_2d(camera_transform, max))
-            .map(|(min, max)| Rect { min, max })
+        let min = camera.viewport_to_world_2d(camera_transform, min);
+        let max = camera.viewport_to_world_2d(camera_transform, max);
+
+        if min.is_err() || max.is_err() {
+            return None;
+        }
+
+        let min = min.unwrap();
+        let max = max.unwrap();
+
+        Some(Rect { min, max })
     }
 }

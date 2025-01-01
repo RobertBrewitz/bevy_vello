@@ -1,8 +1,5 @@
 //! Logic for rendering debug visualizations
-use crate::{
-    text::VelloTextAnchor, CoordinateSpace, VelloAsset, VelloAssetAnchor, VelloFont,
-    VelloTextSection,
-};
+use crate::{text::VelloTextAnchor, CoordinateSpace, VelloFont, VelloTextSection};
 use bevy::{color::palettes::css, math::Vec3Swizzles, prelude::*};
 
 const RED_X_SIZE: f32 = 8.0;
@@ -11,7 +8,7 @@ pub struct DebugVisualizationsPlugin;
 
 impl Plugin for DebugVisualizationsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (render_asset_debug, render_text_debug));
+        app.add_systems(Update, render_text_debug);
     }
 }
 
@@ -21,66 +18,6 @@ pub enum DebugVisualizations {
     #[default]
     Hidden,
     Visible,
-}
-
-/// A system to render debug visualizations for `VelloAsset`.
-fn render_asset_debug(
-    query_vectors: Query<
-        (
-            &Handle<VelloAsset>,
-            &VelloAssetAnchor,
-            &GlobalTransform,
-            &CoordinateSpace,
-            &DebugVisualizations,
-        ),
-        Without<Node>,
-    >,
-    assets: Res<Assets<VelloAsset>>,
-    query_cam: Query<(&Camera, &GlobalTransform, &OrthographicProjection), With<Camera2d>>,
-    mut gizmos: Gizmos,
-) {
-    let Ok((camera, view, projection)) = query_cam.get_single() else {
-        return;
-    };
-
-    // Show vectors
-    for (asset, asset_anchor, gtransform, space, _) in query_vectors
-        .iter()
-        .filter(|(_, _, _, _, d)| **d == DebugVisualizations::Visible)
-    {
-        if let Some(asset) = assets.get(asset) {
-            match space {
-                CoordinateSpace::WorldSpace => {
-                    // Origin
-                    let origin = gtransform.translation().xy();
-                    draw_origin(&mut gizmos, projection, origin);
-                    // Bounding box
-                    let gtransform = &asset_anchor.compute(asset, gtransform);
-                    let rect_center = gtransform.translation().xy();
-                    let rect = asset.bb_in_world_space(gtransform);
-                    draw_bounding_box(&mut gizmos, rect_center, rect.size());
-                }
-                CoordinateSpace::ScreenSpace => {
-                    // Origin
-                    let origin = gtransform.translation().xy();
-                    let Some(origin) = camera.viewport_to_world_2d(view, origin) else {
-                        continue;
-                    };
-                    draw_origin(&mut gizmos, projection, origin);
-                    // Bounding box
-                    let gtransform = &asset_anchor.compute(asset, gtransform);
-                    let rect_center = gtransform.translation().xy();
-                    let Some(rect_center) = camera.viewport_to_world_2d(view, rect_center) else {
-                        continue;
-                    };
-                    let Some(rect) = asset.bb_in_screen_space(gtransform, camera, view) else {
-                        continue;
-                    };
-                    draw_bounding_box(&mut gizmos, rect_center, rect.size());
-                }
-            }
-        }
-    }
 }
 
 /// A system to render debug visualizations for `VelloText`.
@@ -148,13 +85,13 @@ fn render_text_debug(
                         }
                     };
                     let rect_center = origin + rect.size() / 2.0;
-                    gizmos.rect_2d(rect_center, 0.0, rect.size(), css::WHITE);
+                    gizmos.rect_2d(rect_center, rect.size(), css::WHITE);
                 }
                 CoordinateSpace::ScreenSpace => {
                     let Some(rect) = text.bb_in_screen_space(font, gtransform, camera, view) else {
                         continue;
                     };
-                    let Some(mut origin) =
+                    let Ok(mut origin) =
                         camera.viewport_to_world_2d(view, gtransform.translation().xy())
                     else {
                         continue;
@@ -194,12 +131,7 @@ fn render_text_debug(
                         }
                     };
                     let rect_center = origin + Vec2::new(rect.width() / 2.0, -rect.height() / 2.0);
-                    gizmos.rect_2d(
-                        rect_center,
-                        0.0,
-                        rect.size() * Vec2::new(1.0, 1.0),
-                        css::WHITE,
-                    );
+                    gizmos.rect_2d(rect_center, rect.size() * Vec2::new(1.0, 1.0), css::WHITE);
                 }
             }
         }
@@ -221,5 +153,5 @@ fn draw_origin(gizmos: &mut Gizmos, projection: &OrthographicProjection, origin:
 
 /// A helper method to draw the bounding box
 fn draw_bounding_box(gizmos: &mut Gizmos, position: Vec2, size: Vec2) {
-    gizmos.rect_2d(position, 0.0, size, css::WHITE);
+    gizmos.rect_2d(position, size, css::WHITE);
 }

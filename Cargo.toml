@@ -20,7 +20,7 @@ license = "(MIT OR Apache-2.0) AND OFL-1.1"
 repository = "https://github.com/linebender/bevy_vello"
 
 [workspace.dependencies]
-bevy = { version = "0.14.0", default-features = false, features = [
+bevy = { version = "0.15.0", default-features = true, features = [
   "bevy_asset",
   "bevy_winit",
   "bevy_core_pipeline",
@@ -51,7 +51,7 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 bevy = { workspace = true }
-vello = "0.2.1"
+vello = { git = "https://github.com/waywardmonkeys/vello", branch = "update-to-wgpu-23" }
 vello_svg = "0.3.0"
 velato = "0.3.0"
 thiserror = "1.0.61"

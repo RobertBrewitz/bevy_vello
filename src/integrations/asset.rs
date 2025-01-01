@@ -1,6 +1,9 @@
 use crate::VectorFile;
 use bevy::{prelude::*, reflect::TypePath};
 
+#[derive(Component, Deref, DerefMut)]
+pub struct VelloAssetWrapper(pub Handle<VelloAsset>);
+
 #[derive(Asset, TypePath, Clone)]
 pub struct VelloAsset {
     pub file: VectorFile,

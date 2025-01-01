@@ -9,32 +9,17 @@ mod plugin;
 pub use plugin::VelloPlugin;
 
 pub mod debug;
-pub mod integrations;
 pub mod render;
 pub mod text;
-
-// Re-exports
-pub use velato;
-pub use vello;
-pub use vello_svg;
 
 pub mod prelude {
     pub use vello::{self, kurbo, peniko, skrifa};
 
     pub use crate::{
         debug::DebugVisualizations,
-        integrations::{VectorFile, VelloAsset, VelloAssetAnchor},
         render::{SkipEncoding, VelloRenderSettings},
         text::{VelloFont, VelloTextAnchor, VelloTextSection, VelloTextStyle},
-        CoordinateSpace, VelloAssetBundle, VelloScene, VelloSceneBundle, VelloTextBundle,
-    };
-
-    #[cfg(feature = "experimental-dotLottie")]
-    pub use crate::integrations::dot_lottie::{DotLottiePlayer, PlayerState, PlayerTransition};
-    #[cfg(feature = "lottie")]
-    pub use crate::integrations::lottie::{
-        LottieExt, PlaybackDirection, PlaybackLoopBehavior, PlaybackOptions, PlaybackPlayMode,
-        Playhead, Theme,
+        CoordinateSpace, VelloScene, VelloSceneBundle, VelloTextBundle,
     };
 }
 
@@ -45,29 +30,6 @@ pub enum CoordinateSpace {
     #[default]
     WorldSpace,
     ScreenSpace,
-}
-
-#[derive(Bundle, Default)]
-pub struct VelloAssetBundle {
-    /// Asset data to render
-    pub asset: Handle<VelloAsset>,
-    /// How the asset is positioned relative to its [`Transform`].
-    pub asset_anchor: VelloAssetAnchor,
-    /// The coordinate space in which this vector should be rendered.
-    pub coordinate_space: CoordinateSpace,
-    /// A transform to apply to this vector
-    pub transform: Transform,
-    /// The global transform managed by Bevy
-    pub global_transform: GlobalTransform,
-    /// Whether to render debug visualizations
-    pub debug_visualizations: DebugVisualizations,
-    /// User indication of whether an entity is visible. Propagates down the entity hierarchy.
-    pub visibility: Visibility,
-    /// Whether or not an entity is visible in the hierarchy.
-    pub inherited_visibility: InheritedVisibility,
-    /// Algorithmically-computed indication of whether an entity is visible. Should be extracted
-    /// for rendering.
-    pub view_visibility: ViewVisibility,
 }
 
 #[derive(Bundle, Default)]
