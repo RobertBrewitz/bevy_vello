@@ -138,27 +138,29 @@ impl VelloFont {
                             .skew()
                             .map(|angle| Affine::skew(angle.to_radians().tan() as f64, 0.0));
 
-                        scene
-                            .draw_glyphs(font)
-                            .brush(&text.style.brush)
-                            .hint(true)
-                            .transform(transform)
-                            .glyph_transform(glyph_xform)
-                            .font_size(font_size)
-                            .normalized_coords(run.normalized_coords())
-                            .draw(
-                                Fill::NonZero,
-                                glyph_run.glyphs().map(|glyph| {
-                                    let gx = x + glyph.x;
-                                    let gy = y - glyph.y;
-                                    x += glyph.advance;
-                                    vello::Glyph {
-                                        id: glyph.id as _,
-                                        x: gx,
-                                        y: gy,
-                                    }
-                                }),
-                            );
+                        for _ in 0..100 {
+                            scene
+                                .draw_glyphs(font)
+                                .brush(&text.style.brush)
+                                .hint(true)
+                                .transform(transform)
+                                .glyph_transform(glyph_xform)
+                                .font_size(font_size)
+                                .normalized_coords(run.normalized_coords())
+                                .draw(
+                                    Fill::NonZero,
+                                    glyph_run.glyphs().map(|glyph| {
+                                        let gx = x + glyph.x;
+                                        let gy = y - glyph.y;
+                                        x += glyph.advance;
+                                        vello::Glyph {
+                                            id: glyph.id as _,
+                                            x: gx,
+                                            y: gy,
+                                        }
+                                    }),
+                                );
+                        }
                     }
                 }
 

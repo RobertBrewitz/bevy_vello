@@ -4,14 +4,26 @@ use bevy::{
     asset::{AssetMetaCheck, embedded_asset},
     prelude::*,
 };
+use bevy_fps_counter::FpsCounterPlugin;
 use bevy_vello::{VelloPlugin, prelude::*, text::VelloTextAnchor};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(AssetPlugin {
-        meta_check: AssetMetaCheck::Never,
-        ..default()
-    }))
+    app.add_plugins((
+        DefaultPlugins
+            .set(AssetPlugin {
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
+                    ..default()
+                }),
+                ..Default::default()
+            }),
+        FpsCounterPlugin,
+    ))
     .add_plugins(VelloPlugin::default())
     .add_systems(
         Startup,
