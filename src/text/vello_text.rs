@@ -13,9 +13,9 @@ pub struct VelloTextSection {
 pub struct VelloTextStyle {
     pub font: Handle<VelloFont>,
     pub font_size: f32,
-    pub brush: Brush,
-    pub weight: Option<f32>,
     pub line_height: Option<f32>,
+    pub brush: Brush,
+    pub font_axes: VelloFontAxes,
 }
 
 impl Default for VelloTextStyle {
@@ -23,11 +23,73 @@ impl Default for VelloTextStyle {
         Self {
             font: Default::default(),
             font_size: 24.0,
-            brush: Brush::Solid(peniko::Color::WHITE),
-            weight: None,
             line_height: None,
+            brush: Brush::Solid(peniko::Color::WHITE),
+            font_axes: Default::default(),
         }
     }
+}
+
+#[derive(Default, Clone)]
+pub struct VelloFontAxes {
+    /// wght variable axis only if the font supports it
+    pub font_weight: Option<f32>,
+    /// wdth variable axis only if the font supports it
+    pub font_width: Option<f32>,
+    /// opsz variable axis only if the font supports it
+    pub optical_size: Option<f32>,
+    /// ital variable axis only if the font supports it
+    ///
+    /// Mutually exclusive with `slant`.
+    pub italic: bool,
+    /// slnt variable axis only if the font supports it
+    ///
+    /// Mutually exclusive with `italic`.
+    ///
+    /// If italic is true, slant will be ignored.
+    pub slant: Option<f32>,
+
+    /// grad variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/grad_axis
+    pub grade: Option<i32>,
+
+    /// xopq variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/xopq_axis
+    pub thick_stroke: Option<i32>,
+    /// yopq variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/yopq_axis
+    pub thin_stroke: Option<i32>,
+
+    /// xtra variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/xtra_axis
+    pub counter_width: Option<i32>,
+
+    /// ytuc variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/ytuc_axis
+    pub uppercase_height: Option<u32>,
+    /// ytlc variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/ytlc_axis
+    pub lowercase_height: Option<u32>,
+
+    /// ytas variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/ytas_axis
+    pub ascender_height: Option<u32>,
+    /// ytde variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/ytde_axis
+    pub descender_depth: Option<i32>,
+
+    /// ytfi variable axis only if the font supports it
+    ///
+    /// https://fonts.google.com/knowledge/glossary/ytfi_axis
+    pub figure_height: Option<u32>,
 }
 
 /// Describes how the text is positioned relative to its [`Transform`]. It defaults to [`VelloTextAnchor::BottomLeft`].

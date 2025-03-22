@@ -1,11 +1,22 @@
 use std::borrow::Cow;
 
-use crate::text::context::{LOCAL_LAYOUT_CONTEXT, get_global_font_context};
+use crate::text::context::{get_global_font_context, LOCAL_LAYOUT_CONTEXT};
 
-use super::{VelloTextAnchor, context::LOCAL_FONT_CONTEXT, vello_text::VelloTextSection};
+use super::{
+    context::LOCAL_FONT_CONTEXT,
+    vello_text::{VelloFontAxes, VelloTextSection},
+    VelloTextAnchor,
+};
 use bevy::{prelude::*, reflect::TypePath, render::render_asset::RenderAsset};
-use parley::{FontWeight, InlineBox, PositionedLayoutItem, StyleProperty};
-use vello::{Scene, kurbo::Affine, peniko::Fill};
+use parley::{
+    AlignmentOptions, FontSettings, FontStyle, FontWeight, FontWidth, InlineBox,
+    PositionedLayoutItem, RangedBuilder, StyleProperty,
+};
+use vello::{
+    kurbo::Affine,
+    peniko::{Brush, Fill},
+    Scene,
+};
 
 #[derive(Asset, TypePath, Debug, Clone)]
 pub struct VelloFont {
@@ -34,47 +45,36 @@ impl VelloFont {
         }
     }
 
-    pub fn sizeof(&self, text: &VelloTextSection) -> Vec2 {
+    pub fn sizeof(&self, text_section: &VelloTextSection) -> Vec2 {
         LOCAL_FONT_CONTEXT.with_borrow_mut(|font_context| {
             if font_context.is_none() {
                 *font_context = Some(get_global_font_context().clone());
             }
+
             let font_context = font_context.as_mut().unwrap();
 
             LOCAL_LAYOUT_CONTEXT.with_borrow_mut(|layout_context| {
                 // TODO: fix scale magic number
-                let mut builder = layout_context.ranged_builder(font_context, &text.value, 1.0);
-
-                if let Some(weight) = text.style.weight {
-                    builder.push_default(StyleProperty::FontWeight(FontWeight::new(weight)));
-                }
-
-                if let Some(line_height) = text.style.line_height {
-                    builder.push_default(StyleProperty::LineHeight(line_height));
-                }
-
+                // TODO: store and reuse the builder?
+                let mut builder =
+                    layout_context.ranged_builder(font_context, &text_section.value, 1.0);
                 builder.push_default(StyleProperty::FontStack(parley::FontStack::Single(
                     parley::FontFamily::Named(Cow::Borrowed(&self.family_name)),
                 )));
-
+                // apply_font_styles(&mut builder, text_section);
+                // apply_variable_axes(&mut builder, &text_section.style.font_axes);
+                if let Some(weight) = text_section.style.font_axes.font_weight {
+                    println!("apply weight: {}", weight);
+                    builder.push_default(StyleProperty::FontWeight(FontWeight::new(weight)));
+                }
                 builder.push_inline_box(InlineBox {
                     id: 0,
                     index: 5,
                     width: 50.0,
                     height: 50.0,
                 });
-
-                // TODO: "bb code" for text styling?
-                // can use builder.push(StyleProperty::FontWeight(FontWeight::new(700)), 11..42) to
-                // make the characters in the range bold;
-
-                let mut layout = builder.build(&text.value);
-
-                // break_all_lines is required to layout anything
+                let mut layout = builder.build(&text_section.value);
                 layout.break_all_lines(None);
-
-                // layout.align(None, parley::Alignment::Middle, AlignmentOptions::default());
-
                 Vec2::new(layout.width(), layout.height())
             })
         })
@@ -84,43 +84,38 @@ impl VelloFont {
         &self,
         scene: &mut Scene,
         mut transform: Affine,
-        text: &VelloTextSection,
+        text_section: &VelloTextSection,
         text_anchor: VelloTextAnchor,
     ) {
         LOCAL_FONT_CONTEXT.with_borrow_mut(|font_context| {
             if font_context.is_none() {
                 *font_context = Some(get_global_font_context().clone());
             }
+
             let font_context = font_context.as_mut().unwrap();
 
             LOCAL_LAYOUT_CONTEXT.with_borrow_mut(|layout_context| {
                 // TODO: fix scale magic number
-                let mut builder = layout_context.ranged_builder(font_context, &text.value, 1.0);
+                // TODO: store and reuse the builder?
+                let mut builder =
+                    layout_context.ranged_builder(font_context, &text_section.value, 1.0);
 
-                if let Some(weight) = text.style.weight {
-                    // sets the font weight for the entire text
-                    builder.push_default(StyleProperty::FontWeight(FontWeight::new(weight)));
-                }
-
-                if let Some(line_height) = text.style.line_height {
-                    // sets the line height for the entire text
-                    builder.push_default(StyleProperty::LineHeight(line_height));
-                }
-
+                println!("family_name: {}", self.family_name);
                 builder.push_default(StyleProperty::FontStack(parley::FontStack::Single(
                     parley::FontFamily::Named(Cow::Borrowed(&self.family_name)),
                 )));
 
-                // TODO: "bb code" for text styling?
-                // can use builder.push(StyleProperty::FontWeight(FontWeight::new(700)), 11..42) to
-                // make the characters in the range bold;
+                // apply_font_styles(&mut builder, text_section);
+                // apply_variable_axes(&mut builder, &text_section.style.font_axes);
+                if let Some(weight) = text_section.style.font_axes.font_weight {
+                    println!("apply weight: {}", weight);
+                    builder.push_default(StyleProperty::FontWeight(FontWeight::new(weight)));
+                }
 
-                let mut layout = builder.build(&text.value);
+                let mut layout = builder.build(&text_section.value);
 
-                // break_all_lines is required to render anything
                 layout.break_all_lines(None);
-
-                //layout.align(None, parley::Alignment::Middle, AlignmentOptions::default());
+                layout.align(None, parley::Alignment::Middle, AlignmentOptions::default());
 
                 for line in layout.lines() {
                     for item in line.items() {
@@ -140,7 +135,7 @@ impl VelloFont {
 
                         scene
                             .draw_glyphs(font)
-                            .brush(&text.style.brush)
+                            .brush(&text_section.style.brush)
                             .hint(true)
                             .transform(transform)
                             .glyph_transform(glyph_xform)
@@ -196,5 +191,61 @@ impl VelloFont {
                 }
             });
         })
+    }
+}
+
+// Applies the font styles to the text
+//
+// font - font asset
+// line_height - line height
+fn apply_font_styles(builder: &mut RangedBuilder<'_, Brush>, text: &VelloTextSection) {
+    builder.push_default(StyleProperty::FontSize(text.style.font_size));
+
+    if let Some(line_height) = text.style.line_height {
+        builder.push_default(StyleProperty::LineHeight(line_height));
+    }
+}
+
+// Applies the variable axes to the text
+//
+// wght - font weight
+// wdth - font width
+// opsz - optical size
+// ital - italic
+// slnt - slant
+// grad - grade
+// xopq - thick stroke
+// yopq - thin stroke
+// ytuc - uppercase height
+// ytlc - lowercase height
+// ytas - ascender height
+// ytde - descender depth
+// ytfi - figure height
+fn apply_variable_axes(builder: &mut RangedBuilder<'_, Brush>, text: &VelloFontAxes) {
+    if let Some(weight) = text.font_weight {
+        println!("apply weight: {}", weight);
+        builder.push_default(StyleProperty::FontWeight(FontWeight::new(weight)));
+    }
+
+    if let Some(width) = text.font_width {
+        // sets the width for the entire text
+        builder.push_default(StyleProperty::FontWidth(FontWidth::from_ratio(width)));
+    }
+
+    if let Some(optical_size) = text.optical_size {
+        // sets the optical size for the entire text
+        builder.push_default(StyleProperty::FontFeatures(FontSettings::Source(
+            Cow::Borrowed(&format!("'opsz' {}", optical_size).to_string()),
+        )));
+    }
+
+    // FontVariations(FontSettings<'a, FontVariation>),
+    // FontFeatures(FontSettings<'a, FontFeature>),
+
+    if text.italic {
+        builder.push_default(StyleProperty::FontStyle(FontStyle::Italic));
+    } else if text.slant.is_some() {
+        // sets the slant for the entire text
+        builder.push_default(StyleProperty::FontStyle(FontStyle::Oblique(text.slant)));
     }
 }
