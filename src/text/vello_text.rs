@@ -3,10 +3,11 @@ use bevy::prelude::*;
 use vello::peniko::{self, Brush};
 
 #[derive(Component, Default, Clone)]
-#[require(VelloTextAnchor, Transform, Visibility)]
+#[require(VelloTextAnchor, VelloTextAlignment, Transform, Visibility)]
 pub struct VelloTextSection {
     pub value: String,
     pub style: VelloTextStyle,
+    pub size: Option<Vec2>,
 }
 
 #[derive(Clone)]
@@ -138,6 +139,30 @@ pub enum VelloTextAnchor {
     Top,
     /// Bounds start from the render position and advance down and to the left.
     TopRight,
+}
+
+#[derive(Default, Component, Clone, Copy, PartialEq, Eq)]
+pub enum VelloTextAlignment {
+    #[default]
+    Start,
+    End,
+    Left,
+    Middle,
+    Right,
+    Justified,
+}
+
+impl From<VelloTextAlignment> for parley::Alignment {
+    fn from(value: VelloTextAlignment) -> Self {
+        match value {
+            VelloTextAlignment::Start => parley::Alignment::Start,
+            VelloTextAlignment::End => parley::Alignment::End,
+            VelloTextAlignment::Left => parley::Alignment::Left,
+            VelloTextAlignment::Middle => parley::Alignment::Middle,
+            VelloTextAlignment::Right => parley::Alignment::Right,
+            VelloTextAlignment::Justified => parley::Alignment::Justified,
+        }
+    }
 }
 
 impl VelloTextSection {

@@ -205,11 +205,20 @@ pub fn render_frame(
                 affine,
                 item:
                     ExtractedVelloText {
-                        text, text_anchor, ..
+                        text,
+                        text_anchor,
+                        text_alignment,
+                        ..
                     },
             } => {
                 if let Some(font) = font_render_assets.get(text.style.font.id()) {
-                    font.render(&mut scene_buffer, *affine, text, *text_anchor);
+                    font.render(
+                        &mut scene_buffer,
+                        *affine,
+                        text,
+                        *text_anchor,
+                        *text_alignment,
+                    );
                 }
             }
         }

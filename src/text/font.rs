@@ -5,7 +5,7 @@ use crate::text::context::{LOCAL_LAYOUT_CONTEXT, get_global_font_context};
 use super::{
     VelloTextAnchor,
     context::LOCAL_FONT_CONTEXT,
-    vello_text::{VelloFontAxes, VelloTextSection},
+    vello_text::{VelloFontAxes, VelloTextAlignment, VelloTextSection},
 };
 use bevy::{prelude::*, reflect::TypePath, render::render_asset::RenderAsset};
 use parley::{
@@ -80,6 +80,7 @@ impl VelloFont {
         mut transform: Affine,
         text_section: &VelloTextSection,
         text_anchor: VelloTextAnchor,
+        text_align: VelloTextAlignment,
     ) {
         LOCAL_FONT_CONTEXT.with_borrow_mut(|font_context| {
             if font_context.is_none() {
@@ -100,7 +101,19 @@ impl VelloFont {
                 )));
 
                 let mut layout = builder.build(&text_section.value);
-                layout.break_all_lines(None);
+
+                let max_advance = if text_section.size.is_some() {
+                    Some(text_section.size.unwrap().x)
+                } else {
+                    None
+                };
+
+                layout.break_all_lines(max_advance);
+                layout.align(
+                    max_advance,
+                    text_align.into(),
+                    parley::AlignmentOptions::default(),
+                );
 
                 let width = layout.width() as f64;
                 let height = layout.height() as f64;

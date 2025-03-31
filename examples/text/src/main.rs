@@ -39,6 +39,7 @@ fn setup_worldspace_text(mut commands: Commands, asset_server: ResMut<AssetServe
                 font_size: 24.0,
                 ..default()
             },
+            ..default()
         },
         text_anchor: VelloTextAnchor::Center,
         transform: Transform::from_xyz(0.0, -100.0, 0.0),
@@ -59,6 +60,7 @@ fn setup_worldspace_text(mut commands: Commands, asset_server: ResMut<AssetServe
                 font_size: 48.0,
                 ..default()
             },
+            ..default()
         },
         text_anchor: VelloTextAnchor::Center,
         ..default()
